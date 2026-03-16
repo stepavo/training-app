@@ -2,4 +2,745 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Training</title>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Training"/>
+  <meta name="theme-color" content="#1a5fd4"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;
+  --card:#fff;
+  --border:#e8e6e0;
+  --text:#1a1a18;
+  --text2:#6b6a66;
+  --text3:#9b9a96;
+  --blue:#1a5fd4;
+  --blue-light:#e8f0fc;
+  --green:#1a9e6e;
+  --green-light:#e4f5ee;
+  --red:#d43a1a;
+  --amber:#c47800;
+  --radius:10px;
+  --radius-lg:14px;
+}
+body{font-family:'Georgia',serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:480px;margin:0 auto;padding:.75rem}
+
+/* HEADER */
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding:.5rem 0}
+.hdr-title{font-size:20px;font-weight:700;letter-spacing:-.02em}
+.mode-toggle{display:flex;background:var(--border);border-radius:99px;padding:3px;gap:2px}
+.mode-btn{padding:5px 14px;border-radius:99px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:none;color:var(--text2);font-family:inherit;letter-spacing:.03em}
+.mode-btn.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.mode-btn.active.outdoor{color:#1a5fd4}
+.mode-btn.active.indoor{color:#1a9e6e}
+
+/* SCREENS */
+.screen{display:none}.screen.on{display:block}
+
+/* WEEK GRID */
+.week-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem}
+.day-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:1rem}
+.dp{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:7px 3px;text-align:center;cursor:pointer;transition:all .15s;user-select:none}
+.dp.sel.outdoor{background:var(--blue-light);border-color:#93b8f5}
+.dp.sel.indoor{background:var(--green-light);border-color:#7ed4b0}
+.dp.dov{border-width:2px;border-color:var(--blue)}
+.dp.dra{opacity:.3}
+.dp .dl{font-size:10px;color:var(--text3);font-family:sans-serif}
+.dp.sel .dl{color:var(--blue)}
+.dp.sel.indoor .dl{color:var(--green)}
+.dp .dn{font-size:13px;font-weight:700;color:var(--text);margin-top:1px;font-family:sans-serif}
+.dp .dt{font-size:9px;color:var(--text3);margin-top:2px;line-height:1.2;font-family:sans-serif}
+.dp.sel.outdoor .dt{color:var(--blue)}
+.dp.sel.indoor .dt{color:var(--green)}
+
+/* SESSION CARD */
+.sess-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-bottom:.75rem;position:relative;overflow:hidden}
+.sess-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--blue)}
+.sess-card.indoor::before{background:var(--green)}
+.sess-mode-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue);margin-bottom:.35rem;font-family:sans-serif}
+.sess-mode-tag.indoor{color:var(--green)}
+.sess-title{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.sess-sub{font-size:12px;color:var(--text2);margin-top:3px;font-family:sans-serif}
+.meta-row{display:flex;gap:5px;margin-top:.6rem;flex-wrap:wrap}
+.badge{background:var(--bg);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--text2);font-family:sans-serif;border:1px solid var(--border)}
+
+/* SECTION HDR */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;margin:.9rem 0 .4rem}
+.sec-lbl{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;font-family:sans-serif}
+.txt-btn{background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;padding:0;font-family:sans-serif;font-weight:600}
+
+/* EXERCISE CARDS */
+.ex-list{display:flex;flex-direction:column;gap:5px}
+.ex-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.ex-hdr{display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer}
+.ex-drag{cursor:grab;color:var(--text3);font-size:14px;padding:0 2px;font-family:sans-serif}
+.ex-num{width:22px;height:22px;border-radius:50%;background:var(--blue-light);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--blue);flex-shrink:0;font-family:sans-serif}
+.ex-num.indoor{background:var(--green-light);color:var(--green)}
+.ex-inf{flex:1;min-width:0}
+.ex-nm{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.ex-dt{font-size:11px;color:var(--text2);margin-top:1px;font-family:sans-serif}
+.ex-act{display:flex;gap:4px;align-items:center}
+.icon-btn{background:none;border:none;cursor:pointer;font-size:14px;color:var(--text3);padding:2px;line-height:1}
+.icon-btn.danger{color:var(--red)}
+.chev{font-size:12px;color:var(--text3);transition:transform .2s;font-family:sans-serif}
+.chev.op{transform:rotate(180deg)}
+.ex-body{display:none;padding:0 10px 10px;font-family:sans-serif}
+.ex-body.op{display:block}
+.fig-row{display:flex;gap:12px;justify-content:center;margin:8px 0 10px;flex-wrap:wrap}
+.fig-box{display:flex;flex-direction:column;align-items:center;gap:3px}
+.fig-lbl{font-size:9px;color:var(--text3)}
+.ex-desc{font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:7px}
+.cue{font-size:11px;color:var(--text2);padding:2px 0 2px 10px;position:relative}
+.cue::before{content:'—';position:absolute;left:0;color:var(--blue)}
+.cue.indoor::before{color:var(--green)}
+.add-btn{width:100%;margin-top:.5rem;padding:9px;border:1px solid var(--blue);border-radius:var(--radius);background:none;color:var(--blue);font-size:13px;cursor:pointer;font-family:sans-serif;font-weight:600}
+.add-btn.rem{border-color:var(--red);color:var(--red)}
+.add-btn.indoor-btn{border-color:var(--green);color:var(--green)}
+
+/* START BTN */
+.start-btn{width:100%;margin-top:.75rem;padding:14px;background:var(--blue);color:#fff;border:none;border-radius:var(--radius-lg);font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:.02em;transition:opacity .15s}
+.start-btn:active{opacity:.85}
+.start-btn.indoor{background:var(--green)}
+
+
+.wake-toggle{display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:99px;padding:4px 10px 4px 6px;cursor:pointer;font-family:sans-serif;font-size:11px;font-weight:600;color:var(--text2);transition:all .2s}
+.wake-toggle.active{background:var(--green-light);border-color:#7ed4b0;color:var(--green)}
+.wake-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:background .2s}
+.wake-toggle.active .wake-dot{background:var(--green)}
+
+/* BACK BTN */
+.back-btn{background:none;border:none;color:var(--blue);font-size:13px;cursor:pointer;padding:0 0 .75rem;display:flex;align-items:center;gap:4px;font-family:sans-serif;font-weight:600}
+
+/* PROGRESS */
+.prog-wrap{background:var(--border);border-radius:99px;height:3px;margin-bottom:1rem;overflow:hidden}
+.prog-bar{height:3px;background:var(--blue);border-radius:99px;transition:width .3s}
+.prog-bar.indoor{background:var(--green)}
+
+/* WORKOUT */
+.w-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem;margin-bottom:.75rem}
+.w-ex-nm{font-size:19px;font-weight:700;color:var(--text);letter-spacing:-.02em}
+.w-ex-st{font-size:13px;color:var(--text2);margin-top:3px;font-family:sans-serif}
+.set-row{display:flex;gap:7px;margin:.75rem 0;flex-wrap:wrap}
+.sdot{width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;color:var(--text2);transition:all .15s;font-family:sans-serif;font-weight:600}
+.sdot.done{background:var(--blue);border-color:var(--blue);color:#fff}
+.sdot.done.indoor{background:var(--green);border-color:var(--green)}
+.timer-wrap{display:flex;flex-direction:column;align-items:center;margin:.75rem 0}
+.t-circle{position:relative;width:100px;height:100px}
+.t-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:28px;font-weight:700;color:var(--text)}
+.t-lbl{font-size:11px;color:var(--text2);margin-top:4px;font-family:sans-serif}
+.nav-row{display:flex;gap:7px;margin-top:.5rem}
+.nav-btn{flex:1;padding:11px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);font-size:13px;color:var(--text);cursor:pointer;font-family:sans-serif;font-weight:600}
+.nav-btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+.nav-btn.pri.indoor{background:var(--green);border-color:var(--green)}
+.finish{text-align:center;padding:2rem 1rem}
+
+/* POOL */
+.pool-search{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--card);color:var(--text);margin-bottom:.5rem;font-family:sans-serif}
+.pool-search:focus{outline:none;border-color:var(--blue)}
+.muscle-filters{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.5rem}
+.mf{padding:4px 10px;border:1px solid var(--border);border-radius:99px;font-size:11px;color:var(--text2);cursor:pointer;background:var(--card);font-family:sans-serif;font-weight:600}
+.mf.sel{background:var(--blue-light);border-color:#93b8f5;color:var(--blue)}
+.mf.sel.indoor{background:var(--green-light);border-color:#7ed4b0;color:var(--green)}
+
+/* INDOOR BANNER */
+.indoor-banner{background:var(--green-light);border:1px solid #7ed4b0;border-radius:var(--radius);padding:8px 12px;margin-bottom:.75rem;font-size:11px;color:var(--green);font-family:sans-serif;font-weight:600;display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="hdr">
+  <div class="hdr-title">Training</div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="wake-toggle" id="wakeBtn" onclick="toggleWake()" title="Keep screen on during workout">
+      <div class="wake-dot" id="wakeDot"></div>
+      <span id="wakeLabel">Screen</span>
+    </button>
+    <div class="mode-toggle">
+    <button class="mode-btn active outdoor" id="btnOutdoor" onclick="setMode('outdoor')">&#9728; Outdoor</button>
+    <button class="mode-btn indoor" id="btnIndoor" onclick="setMode('indoor')">&#127960; Indoor</button>
+  </div>
+</div>
+</div>
+
+<div class="screen on" id="s-week">
+  <p class="week-label">Weekly plan — drag to rearrange</p>
+  <div class="day-grid" id="dayGrid"></div>
+  <div id="dayDetail"></div>
+</div>
+
+<div class="screen" id="s-pool">
+  <button class="back-btn" onclick="show('s-week')">&#8592; Back to plan</button>
+  <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:.2rem;letter-spacing:-.01em" id="poolTitle"></div>
+  <div style="font-size:11px;color:var(--text2);margin-bottom:.75rem;font-family:sans-serif">Tap to preview. Add or remove from session.</div>
+  <input class="pool-search" placeholder="Search exercises..." oninput="filterPool(this.value)" id="poolSearch"/>
+  <div class="muscle-filters" id="muscleFilters"></div>
+  <div class="ex-list" id="poolList"></div>
+</div>
+
+<div class="screen" id="s-workout">
+  <button class="back-btn" onclick="endWorkout()">&#8592; Back to plan</button>
+  <div class="prog-wrap"><div class="prog-bar" id="progBar"></div></div>
+  <div id="workoutContent"></div>
+</div>
+
+</div>
+
+<script>
+// ─── MODE ────────────────────────────────────────────────────────────────────
+let mode = 'outdoor'; // 'outdoor' | 'indoor'
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('btnOutdoor').className = 'mode-btn' + (m==='outdoor'?' active outdoor':' outdoor');
+  document.getElementById('btnIndoor').className = 'mode-btn' + (m==='indoor'?' active indoor':' indoor');
+  renderWeek(); renderDay();
+}
+
+// ─── FIGURES ─────────────────────────────────────────────────────────────────
+function makeFig(type) {
+  const c = '#1a1a18';
+  const g = '#ddd';
+  const blue = '#1a5fd4';
+  const green = '#1a9e6e';
+  const figs = {
+    pullup_hang:`<svg width="80" height="145" viewBox="0 0 80 145" fill="none"><rect x="5" y="8" width="70" height="7" rx="3" fill="#888"/><line x1="30" y1="15" x2="30" y2="28" stroke="#888" stroke-width="2"/><line x1="50" y1="15" x2="50" y2="28" stroke="#888" stroke-width="2"/><circle cx="40" cy="38" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="40" y1="48" x2="40" y2="75" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="30" y1="28" x2="40" y2="55" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="50" y1="28" x2="40" y2="55" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="40" cy="55" r="4" fill="${c}"/><circle cx="40" cy="75" r="4" fill="${c}"/><line x1="40" y1="75" x2="32" y2="108" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="40" y1="75" x2="48" y2="108" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="32" cy="108" r="3.5" fill="${c}"/><circle cx="48" cy="108" r="3.5" fill="${c}"/><line x1="32" y1="108" x2="30" y2="132" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="48" y1="108" x2="50" y2="132" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="20" y1="132" x2="40" y2="132" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="40" y1="132" x2="60" y2="132" stroke="${c}" stroke-width="5" stroke-linecap="round"/></svg>`,
+    pullup_top:`<svg width="80" height="145" viewBox="0 0 80 145" fill="none"><rect x="5" y="35" width="70" height="7" rx="3" fill="#888"/><line x1="28" y1="42" x2="26" y2="52" stroke="#888" stroke-width="2"/><line x1="52" y1="42" x2="54" y2="52" stroke="#888" stroke-width="2"/><circle cx="40" cy="22" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="40" y1="32" x2="40" y2="55" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="26" y1="52" x2="40" y2="45" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="54" y1="52" x2="40" y2="45" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="40" cy="45" r="4" fill="${c}"/><circle cx="40" cy="55" r="4" fill="${c}"/><line x1="40" y1="55" x2="33" y2="85" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="40" y1="55" x2="47" y2="85" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="33" cy="85" r="3.5" fill="${c}"/><circle cx="47" cy="85" r="3.5" fill="${c}"/><line x1="33" y1="85" x2="31" y2="112" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="47" y1="85" x2="49" y2="112" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="20" y1="112" x2="40" y2="112" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="40" y1="112" x2="60" y2="112" stroke="${c}" stroke-width="5" stroke-linecap="round"/></svg>`,
+    dip_top:`<svg width="120" height="145" viewBox="0 0 120 145" fill="none"><line x1="10" y1="58" x2="45" y2="58" stroke="#888" stroke-width="5" stroke-linecap="round"/><line x1="75" y1="58" x2="110" y2="58" stroke="#888" stroke-width="5" stroke-linecap="round"/><line x1="10" y1="58" x2="10" y2="128" stroke="#888" stroke-width="4" stroke-linecap="round"/><line x1="110" y1="58" x2="110" y2="128" stroke="#888" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="26" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="60" y1="36" x2="60" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="48" x2="45" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="48" x2="75" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="48" r="4" fill="${c}"/><circle cx="45" cy="58" r="4" fill="${c}"/><circle cx="75" cy="58" r="4" fill="${c}"/><circle cx="60" cy="60" r="4" fill="${c}"/><line x1="60" y1="60" x2="52" y2="95" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="60" x2="68" y2="95" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="95" r="3.5" fill="${c}"/><circle cx="68" cy="95" r="3.5" fill="${c}"/><line x1="52" y1="95" x2="50" y2="122" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="95" x2="70" y2="122" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="38" y1="122" x2="58" y2="122" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="62" y1="122" x2="82" y2="122" stroke="${c}" stroke-width="5" stroke-linecap="round"/></svg>`,
+    dip_low:`<svg width="120" height="145" viewBox="0 0 120 145" fill="none"><line x1="10" y1="42" x2="45" y2="42" stroke="#888" stroke-width="5" stroke-linecap="round"/><line x1="75" y1="42" x2="110" y2="42" stroke="#888" stroke-width="5" stroke-linecap="round"/><line x1="10" y1="42" x2="10" y2="128" stroke="#888" stroke-width="4" stroke-linecap="round"/><line x1="110" y1="42" x2="110" y2="128" stroke="#888" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="48" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="60" y1="58" x2="60" y2="72" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="65" x2="45" y2="42" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="65" x2="75" y2="42" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="65" r="4" fill="${c}"/><circle cx="45" cy="42" r="4" fill="${c}"/><circle cx="75" cy="42" r="4" fill="${c}"/><circle cx="60" cy="72" r="4" fill="${c}"/><line x1="60" y1="72" x2="52" y2="105" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="72" x2="68" y2="105" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="105" r="3.5" fill="${c}"/><circle cx="68" cy="105" r="3.5" fill="${c}"/><line x1="52" y1="105" x2="50" y2="130" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="105" x2="70" y2="130" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="38" y1="130" x2="58" y2="130" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="62" y1="130" x2="82" y2="130" stroke="${c}" stroke-width="5" stroke-linecap="round"/><text x="60" y="143" text-anchor="middle" font-size="9" fill="#d43a1a" font-family="sans-serif">90°</text></svg>`,
+    row_catch:`<svg width="150" height="95" viewBox="0 0 150 95" fill="none"><rect x="5" y="72" width="140" height="6" rx="3" fill="#aaa"/><rect x="5" y="62" width="18" height="20" rx="3" fill="#ccc"/><rect x="80" y="65" width="24" height="8" rx="3" fill="#ccc"/><circle cx="118" cy="45" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="118" y1="55" x2="105" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="105" y1="70" x2="60" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="105" cy="70" r="4" fill="${c}"/><circle cx="60" cy="70" r="4" fill="${c}"/><line x1="60" y1="70" x2="52" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="105" y1="63" x2="118" y2="57" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="118" y1="57" x2="134" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="118" cy="57" r="3.5" fill="${c}"/><line x1="52" y1="58" x2="34" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="52" cy="58" r="3.5" fill="${c}"/></svg>`,
+    row_drive:`<svg width="150" height="95" viewBox="0 0 150 95" fill="none"><rect x="5" y="72" width="140" height="6" rx="3" fill="#aaa"/><rect x="5" y="62" width="18" height="20" rx="3" fill="#ccc"/><rect x="105" y="65" width="24" height="8" rx="3" fill="#ccc"/><circle cx="105" cy="38" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="105" y1="48" x2="112" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="112" y1="60" x2="55" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="112" cy="60" r="4" fill="${c}"/><circle cx="55" cy="70" r="4" fill="${c}"/><line x1="55" y1="70" x2="30" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="30" cy="58" r="3.5" fill="${c}"/><line x1="105" y1="50" x2="88" y2="50" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="88" y1="50" x2="72" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="88" cy="50" r="3.5" fill="${c}"/><line x1="30" y1="58" x2="14" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/></svg>`,
+    glute_bridge_start:`<svg width="200" height="85" viewBox="0 0 200 85" fill="none"><line x1="5" y1="72" x2="195" y2="72" stroke="${g}" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="52" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="30" y1="52" x2="100" y2="52" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="52" r="5" fill="${c}"/><line x1="55" y1="52" x2="48" y2="72" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/><circle cx="48" cy="72" r="3.5" fill="${c}"/><line x1="48" y1="72" x2="28" y2="72" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/><line x1="100" y1="52" x2="136" y2="20" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="136" cy="20" r="5" fill="${c}"/><line x1="136" y1="20" x2="154" y2="65" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="154" cy="65" r="4.5" fill="${c}"/><line x1="138" y1="72" x2="166" y2="72" stroke="${c}" stroke-width="5.5" stroke-linecap="round"/></svg>`,
+    glute_bridge_top:`<svg width="200" height="105" viewBox="0 0 200 105" fill="none"><line x1="5" y1="92" x2="195" y2="92" stroke="${g}" stroke-width="3" stroke-linecap="round"/><circle cx="20" cy="72" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="30" y1="72" x2="95" y2="72" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="95" cy="72" r="5" fill="${c}"/><line x1="55" y1="72" x2="48" y2="92" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/><circle cx="48" cy="92" r="3.5" fill="${c}"/><line x1="48" y1="92" x2="28" y2="92" stroke="${c}" stroke-width="3.5" stroke-linecap="round"/><line x1="95" y1="72" x2="148" y2="25" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="148" cy="25" r="6" fill="${c}"/><line x1="148" y1="25" x2="172" y2="70" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="172" cy="70" r="4.5" fill="${c}"/><line x1="172" y1="70" x2="188" y2="92" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="188" cy="92" r="4" fill="${c}"/><line x1="172" y1="92" x2="195" y2="92" stroke="${c}" stroke-width="5.5" stroke-linecap="round"/><line x1="95" y1="72" x2="188" y2="92" stroke="${green}" stroke-width="1.5" stroke-dasharray="5 3"/><path d="M158 15 L158 4" stroke="${green}" stroke-width="2.5" stroke-linecap="round"/><path d="M153 10 L158 3 L163 10" fill="none" stroke="${green}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+    split_squat:`<svg width="100" height="148" viewBox="0 0 100 148" fill="none"><rect x="55" y="98" width="40" height="8" rx="3" fill="#ccc"/><circle cx="42" cy="16" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="42" y1="26" x2="42" y2="52" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="42" y1="40" x2="22" y2="46" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="42" y1="40" x2="62" y2="46" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="42" cy="40" r="4" fill="${c}"/><circle cx="42" cy="52" r="4" fill="${c}"/><line x1="42" y1="52" x2="28" y2="98" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="28" cy="98" r="5" fill="${c}"/><line x1="28" y1="98" x2="26" y2="132" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="26" cy="132" r="4" fill="${c}"/><line x1="14" y1="140" x2="36" y2="140" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="42" y1="52" x2="70" y2="86" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="70" cy="86" r="5" fill="${c}"/><line x1="70" y1="86" x2="80" y2="106" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/></svg>`,
+    jumprope:`<svg width="90" height="138" viewBox="0 0 90 138" fill="none"><circle cx="45" cy="16" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="45" y1="26" x2="45" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="45" y1="40" x2="25" y2="48" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="45" y1="40" x2="65" y2="48" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="45" cy="40" r="4" fill="${c}"/><line x1="25" y1="48" x2="22" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="65" y1="48" x2="68" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="25" cy="48" r="3.5" fill="${c}"/><circle cx="65" cy="48" r="3.5" fill="${c}"/><circle cx="45" cy="58" r="4" fill="${c}"/><line x1="45" y1="58" x2="36" y2="93" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="45" y1="58" x2="54" y2="93" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="36" cy="93" r="3.5" fill="${c}"/><circle cx="54" cy="93" r="3.5" fill="${c}"/><line x1="36" y1="93" x2="34" y2="116" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="54" y1="93" x2="56" y2="116" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="22" y1="116" x2="44" y2="116" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="46" y1="116" x2="68" y2="116" stroke="${c}" stroke-width="5" stroke-linecap="round"/><path d="M14 88 Q45 128 76 88" stroke="${blue}" stroke-width="2" fill="none"/></svg>`,
+    deadbug:`<svg width="180" height="98" viewBox="0 0 180 98" fill="none"><line x1="5" y1="80" x2="175" y2="80" stroke="${g}" stroke-width="3" stroke-linecap="round"/><circle cx="90" cy="58" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="90" y1="68" x2="90" y2="80" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="90" y1="74" x2="55" y2="63" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="90" y1="74" x2="125" y2="63" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="90" cy="74" r="4" fill="${c}"/><line x1="55" y1="63" x2="28" y2="46" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="55" cy="63" r="3.5" fill="${c}"/><line x1="125" y1="63" x2="152" y2="46" stroke="${c}" stroke-width="3.5" stroke-linecap="round" opacity="0.35"/><circle cx="125" cy="63" r="3.5" fill="${c}" opacity="0.35"/><line x1="90" y1="80" x2="72" y2="63" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="72" cy="63" r="3.5" fill="${c}"/><line x1="72" y1="63" x2="55" y2="80" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="55" cy="80" r="3.5" fill="${c}"/><line x1="90" y1="80" x2="108" y2="63" stroke="${c}" stroke-width="3.5" stroke-linecap="round" opacity="0.35"/></svg>`,
+    hollow:`<svg width="180" height="78" viewBox="0 0 180 78" fill="none"><line x1="5" y1="65" x2="175" y2="65" stroke="${g}" stroke-width="3" stroke-linecap="round"/><circle cx="90" cy="46" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="90" y1="56" x2="90" y2="64" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="90" y1="60" x2="48" y2="53" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="90" y1="60" x2="132" y2="53" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="90" cy="60" r="4" fill="${c}"/><line x1="48" y1="53" x2="15" y2="43" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="48" cy="53" r="3.5" fill="${c}"/><line x1="132" y1="53" x2="165" y2="43" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="132" cy="53" r="3.5" fill="${c}"/><line x1="90" y1="64" x2="58" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="58" y1="58" x2="26" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="58" cy="58" r="3.5" fill="${c}"/><line x1="90" y1="64" x2="122" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="122" y1="58" x2="154" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="122" cy="58" r="3.5" fill="${c}"/></svg>`,
+    slack:`<svg width="140" height="128" viewBox="0 0 140 128" fill="none"><path d="M5 92 Q70 80 135 92" stroke="${blue}" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="68" cy="36" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="68" y1="46" x2="68" y2="70" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="56" x2="40" y2="50" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="56" x2="96" y2="50" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="68" cy="56" r="4" fill="${c}"/><circle cx="68" cy="70" r="4" fill="${c}"/><line x1="68" y1="70" x2="64" y2="92" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="64" cy="92" r="4" fill="${c}"/><line x1="64" y1="92" x2="62" y2="116" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="68" y1="70" x2="80" y2="98" stroke="${c}" stroke-width="3.5" stroke-linecap="round" opacity="0.3"/></svg>`,
+    pushup:`<svg width="160" height="88" viewBox="0 0 160 88" fill="none"><line x1="5" y1="73" x2="155" y2="73" stroke="${g}" stroke-width="3" stroke-linecap="round"/><circle cx="120" cy="36" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="120" y1="46" x2="105" y2="56" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="105" y1="56" x2="75" y2="60" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="75" y1="60" x2="45" y2="66" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="45" y1="66" x2="22" y2="73" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="105" cy="56" r="4" fill="${c}"/><circle cx="45" cy="66" r="4" fill="${c}"/><line x1="105" y1="56" x2="112" y2="73" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="112" cy="73" r="4" fill="${c}"/><line x1="120" y1="48" x2="138" y2="48" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="138" y1="48" x2="148" y2="56" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="138" cy="48" r="3.5" fill="${c}"/></svg>`,
+    bandwalk:`<svg width="120" height="142" viewBox="0 0 120 142" fill="none"><circle cx="60" cy="16" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="60" y1="26" x2="60" y2="52" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="38" x2="36" y2="46" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="60" y1="38" x2="84" y2="46" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="60" cy="38" r="4" fill="${c}"/><circle cx="60" cy="52" r="4" fill="${c}"/><line x1="60" y1="52" x2="42" y2="88" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="60" y1="52" x2="78" y2="88" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="42" cy="88" r="5" fill="${c}"/><circle cx="78" cy="88" r="5" fill="${c}"/><line x1="42" y1="88" x2="38" y2="120" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="78" y1="88" x2="82" y2="120" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="38" cy="120" r="4" fill="${c}"/><circle cx="82" cy="120" r="4" fill="${c}"/><line x1="24" y1="128" x2="50" y2="128" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="70" y1="128" x2="96" y2="128" stroke="${c}" stroke-width="5" stroke-linecap="round"/><path d="M28 106 Q60 116 92 106" stroke="#d43a1a" stroke-width="2" fill="none" stroke-dasharray="4 3"/></svg>`,
+    band_row:`<svg width="140" height="105" viewBox="0 0 140 105" fill="none"><circle cx="108" cy="25" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="108" y1="35" x2="100" y2="50" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="100" y1="50" x2="80" y2="58" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="50" r="4" fill="${c}"/><circle cx="80" cy="58" r="4" fill="${c}"/><line x1="80" y1="58" x2="60" y2="78" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="80" y1="58" x2="100" y2="78" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="60" cy="78" r="5" fill="${c}"/><circle cx="100" cy="78" r="5" fill="${c}"/><line x1="60" y1="78" x2="55" y2="100" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="100" y1="78" x2="105" y2="100" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="100" y1="42" x2="118" y2="42" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="118" y1="42" x2="125" y2="50" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="118" cy="42" r="3.5" fill="${c}"/><path d="M20 50 Q40 48 55 52" stroke="${green}" stroke-width="2.5" fill="none" stroke-dasharray="5 3"/><line x1="10" y1="48" x2="10" y2="55" stroke="#888" stroke-width="4" stroke-linecap="round"/><line x1="5" y1="48" x2="15" y2="48" stroke="#888" stroke-width="4" stroke-linecap="round"/><line x1="5" y1="55" x2="15" y2="55" stroke="#888" stroke-width="3" stroke-linecap="round"/></svg>`,
+    band_press:`<svg width="100" height="148" viewBox="0 0 100 148" fill="none"><circle cx="50" cy="16" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="50" y1="26" x2="50" y2="52" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="50" y1="38" x2="28" y2="44" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="50" y1="38" x2="72" y2="44" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="50" cy="38" r="4" fill="${c}"/><line x1="28" y1="44" x2="22" y2="28" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="72" y1="44" x2="78" y2="28" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="28" cy="44" r="3.5" fill="${c}"/><circle cx="72" cy="44" r="3.5" fill="${c}"/><circle cx="50" cy="52" r="4" fill="${c}"/><line x1="50" y1="52" x2="38" y2="90" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="50" y1="52" x2="62" y2="90" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="38" cy="90" r="5" fill="${c}"/><circle cx="62" cy="90" r="5" fill="${c}"/><line x1="38" y1="90" x2="34" y2="122" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="62" y1="90" x2="66" y2="122" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><line x1="20" y1="130" x2="46" y2="130" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="54" y1="130" x2="80" y2="130" stroke="${c}" stroke-width="5" stroke-linecap="round"/><path d="M22 26 L22 10" stroke="${green}" stroke-width="2" fill="none" stroke-dasharray="4 3"/><path d="M78 26 L78 10" stroke="${green}" stroke-width="2" fill="none" stroke-dasharray="4 3"/></svg>`,
+    standing_balance:`<svg width="80" height="148" viewBox="0 0 80 148" fill="none"><circle cx="40" cy="16" r="10" fill="none" stroke="${c}" stroke-width="4"/><line x1="40" y1="26" x2="40" y2="68" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="40" y1="45" x2="14" y2="55" stroke="${c}" stroke-width="4" stroke-linecap="round"/><line x1="40" y1="45" x2="66" y2="55" stroke="${c}" stroke-width="4" stroke-linecap="round"/><circle cx="40" cy="45" r="4" fill="${c}"/><circle cx="40" cy="68" r="5" fill="${c}"/><line x1="40" y1="68" x2="36" y2="108" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="36" cy="108" r="4.5" fill="${c}"/><line x1="36" y1="108" x2="34" y2="136" stroke="${c}" stroke-width="4.5" stroke-linecap="round"/><circle cx="34" cy="136" r="4" fill="${c}"/><line x1="20" y1="142" x2="46" y2="142" stroke="${c}" stroke-width="5" stroke-linecap="round"/><line x1="40" y1="68" x2="52" y2="92" stroke="${c}" stroke-width="4" stroke-linecap="round" opacity="0.35" stroke-dasharray="4 3"/><circle cx="52" cy="92" r="4" fill="${c}" opacity="0.35"/></svg>`
+  };
+  return figs[type] || `<svg width="60" height="60" viewBox="0 0 60 60"><text x="30" y="34" text-anchor="middle" font-size="10" fill="#999" font-family="sans-serif">—</text></svg>`;
+}
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const DAYS_ARR = ['Mon','Tue','Wed','Thu','Fri'];
+
+const SESSION_DEFS = {
+  outdoor: [
+    {name:'Upper body strength',tag:'Bars + bands',duration:'42 min',tools:'Parallel bars · monkey bars · bands',warmup:'5 min jump rope + arm circles'},
+    {name:'Cardio + core',tag:'Row + mat',duration:'40 min',tools:'Rowing machine · jump rope · mat',warmup:'3 min easy row'},
+    {name:'Lower body + mobility',tag:'Bands + slackline',duration:'43 min',tools:'Resistance bands · slackline · mat',warmup:'5 min hip circles + leg swings'},
+    {name:'Full body circuit',tag:'All tools',duration:'45 min',tools:'All equipment',warmup:'5 min: row + jump rope + mobility'},
+    {name:'Active recovery',tag:'Mobility + balance',duration:'35 min',tools:'Slackline · mat · light bands',warmup:'None — start easy'}
+  ],
+  indoor: [
+    {name:'Upper body — bands',tag:'Bands only',duration:'42 min',tools:'Loop bands · handled band · mat',warmup:'5 min arm circles + band activation'},
+    {name:'Cardio + core',tag:'Row + mat',duration:'40 min',tools:'Rowing machine · mat',warmup:'3 min easy row'},
+    {name:'Lower body + balance',tag:'Bands + mat',duration:'43 min',tools:'Loop bands · mat',warmup:'5 min hip circles + leg swings'},
+    {name:'Full body circuit',tag:'Row + bands',duration:'45 min',tools:'Rowing machine · all bands · mat',warmup:'5 min: row + mobility'},
+    {name:'Active recovery',tag:'Mat only',duration:'35 min',tools:'Yoga mat · light bands',warmup:'None — start easy'}
+  ]
+};
+
+const POOL = {
+  outdoor: {
+    0:[
+      {id:'scap',name:'Scapular pull-ups',muscle:'Back',sets:3,reps:'8 reps',rest:60,desc:'Hang from monkey bars arms straight. Squeeze shoulder blades to lift body 3–4cm without bending elbows.',cues:['Arms fully straight','Shoulder blades pinch','3 sec lowering'],figs:['pullup_hang','pullup_top']},
+      {id:'dip',name:'Parallel bar dips',muscle:'Chest / triceps',sets:3,reps:'8–10 reps',rest:90,desc:'Lower by bending elbows to 90°, slight forward lean. Press back to full lock-out.',cues:['Slight forward lean','Full lock-out at top','Control the descent'],figs:['dip_top','dip_low']},
+      {id:'pullup',name:'Pull-ups',muscle:'Back / biceps',sets:3,reps:'5–8 reps',rest:90,desc:'Dead hang, grip shoulder-width. Pull until chin clears bar. Lower with control.',cues:['Shoulder blades initiate','Chest to bar','3 sec lowering'],figs:['pullup_hang','pullup_top']},
+      {id:'pullapart',name:'Band pull-apart',muscle:'Rear delts',sets:3,reps:'15 reps',rest:45,desc:'Hold band at shoulder height. Pull apart until band touches chest. Squeeze 1 sec.',cues:['Arms at shoulder height','Squeeze at extension','Slow return'],figs:['pullup_hang']},
+      {id:'lsit',name:'L-sit hold',muscle:'Core / shoulders',sets:3,reps:'15–20 sec',rest:60,desc:'On parallel bars, arms locked. Lift legs parallel to floor. Push down hard.',cues:['Arms fully locked','Tuck version to start','Point toes'],figs:['dip_top']},
+      {id:'monkey',name:'Monkey bar traverse',muscle:'Grip / back',sets:3,reps:'2 full lengths',rest:60,desc:'Traverse monkey bars. Initiate swing from hips. Grip firm but relaxed.',cues:['Swing from hips','Light grip','Stay deliberate'],figs:['pullup_hang']},
+      {id:'ringrow',name:'Inverted row',muscle:'Back / biceps',sets:3,reps:'10 reps',rest:60,desc:'Feet elevated, hands on bar. Pull chest to bar keeping elbows close.',cues:['Straight body line','Lead with elbows','Pause at top'],figs:['pullup_top']},
+      {id:'bandbicep',name:'Band bicep curl',muscle:'Biceps',sets:3,reps:'12 reps',rest:45,desc:'Stand on band, palms up. Curl handles to shoulders, elbows pinned.',cues:['Elbows pinned to ribs','Full extension at bottom','No swinging'],figs:['pullup_hang']},
+      {id:'bandshoulder',name:'Band shoulder press',muscle:'Shoulders',sets:3,reps:'12 reps',rest:60,desc:'Stand on band, handles at shoulders. Press overhead to full lock-out.',cues:['Core braced','Full lock-out','3 sec lowering'],figs:['band_press']},
+      {id:'deadhang',name:'Dead hang',muscle:'Grip / decompression',sets:3,reps:'30–45 sec',rest:60,desc:'Hang from monkey bars, shoulders relaxed. Builds grip and decompresses spine.',cues:['Shoulders relaxed','Breathe slowly','Work toward 45 sec'],figs:['pullup_hang']}
+    ],
+    1:[
+      {id:'rowint',name:'Row intervals',muscle:'Full body / cardio',sets:6,reps:'3 min on / 1 min easy',rest:60,desc:'Row at 70–75% for 3 min then easy 1 min. Legs drive first, then hips, then arms.',cues:['Catch: shins vertical','Drive: legs → hips → arms','Consistent split'],figs:['row_catch','row_drive']},
+      {id:'jumprope',name:'Jump rope intervals',muscle:'Cardio / calves',sets:4,reps:'30 sec on / 30 sec off',rest:30,desc:'Max pace 30 sec, rest 30 sec. Stay on balls of feet. Wrists drive the rope.',cues:['Balls of feet only','Wrists not arms','Tight core'],figs:['jumprope']},
+      {id:'deadbug',name:'Dead bug',muscle:'Core',sets:3,reps:'10 each side',rest:45,desc:'Lie on back, arms up, knees at 90°. Lower opposite arm and leg without back lifting.',cues:['Back into mat','Exhale on extension','4 sec per rep'],figs:['deadbug']},
+      {id:'hollow',name:'Hollow body hold',muscle:'Core',sets:3,reps:'20–30 sec',rest:45,desc:'Press back into mat. Lift shoulders and legs. Hold banana shape.',cues:['Back glued to mat','Legs together, toes pointed','Build to 30 sec'],figs:['hollow']},
+      {id:'plank',name:'Plank',muscle:'Core / shoulders',sets:3,reps:'30–45 sec',rest:45,desc:'Forearm plank. Hips level, squeeze glutes.',cues:['Hips level','Squeeze glutes','Breathe steadily'],figs:['pushup']},
+      {id:'row500',name:'500m row sprint',muscle:'Full body / power',sets:4,reps:'500m max effort',rest:90,desc:'Full effort for 500m. Note split time each round.',cues:['Legs first','Rate 28–32 s/m','Breathe out on drive'],figs:['row_catch','row_drive']},
+      {id:'mountain',name:'Mountain climbers',muscle:'Core / cardio',sets:3,reps:'20 each leg',rest:45,desc:'From plank, alternate driving knees to chest.',cues:['Hips level','Drive knee to chest','Slow=core, fast=cardio'],figs:['pushup']},
+      {id:'situp',name:'Sit-ups',muscle:'Core / abs',sets:3,reps:'15 reps',rest:45,desc:'Knees bent, sit up reaching hands to feet. Lower 3 sec.',cues:['Exhale as you rise','Reach forward','Slow descent'],figs:['deadbug']},
+      {id:'burpee',name:'Burpees',muscle:'Full body / cardio',sets:3,reps:'8–10 reps',rest:60,desc:'Squat, jump back, lower, press up, jump in, jump up.',cues:['Land softly','Chest to floor','Step version if needed'],figs:['pushup']},
+      {id:'jumpropecont',name:'Continuous jump rope',muscle:'Cardio',sets:1,reps:'3–5 min',rest:60,desc:'Steady pace. Not max effort — find a rhythm.',cues:['Sustainable pace','Relax shoulders','Cool-down use'],figs:['jumprope']}
+    ],
+    2:[
+      {id:'splitsquat',name:'Bulgarian split squat',muscle:'Quads / glutes',sets:3,reps:'10 each leg',rest:60,desc:'Rear foot elevated. Front shin vertical. Lower rear knee, drive through front heel.',cues:['Front shin vertical','Knee tracks toes','3 sec lowering'],figs:['split_squat']},
+      {id:'glutebridge',name:'Band glute bridge',muscle:'Glutes / hamstrings',sets:3,reps:'15 reps',rest:45,desc:'Loop band above knees. Drive hips up squeezing glutes. Straight line shoulder to knee.',cues:['Straight line — no arch','Squeeze glutes hard','Press knees into band'],figs:['glute_bridge_start','glute_bridge_top']},
+      {id:'bandwalk',name:'Lateral band walk',muscle:'Glutes / hips',sets:3,reps:'15 steps each way',rest:45,desc:'Band above knees, slight squat. Step sideways keeping band taut.',cues:['Stay in squat','Hips level','Feet shoulder-width'],figs:['bandwalk']},
+      {id:'slack',name:'Slackline balance',muscle:'Balance / ankle',sets:3,reps:'2 min each leg',rest:30,desc:'One foot on slackline. Arms out. Fixed horizon point.',cues:['Soft knee','Fixed gaze','Let line move'],figs:['slack']},
+      {id:'lunge',name:'Hip flexor stretch',muscle:'Hip flexors',sets:2,reps:'60 sec each side',rest:15,desc:'Low lunge, rear knee on mat. Drive hips forward and down.',cues:['Hips forward','Rear glute engaged','Breathe into stretch'],figs:['split_squat']},
+      {id:'squat',name:'Bodyweight squat',muscle:'Quads / glutes',sets:3,reps:'15–20 reps',rest:45,desc:'Feet shoulder-width. Thighs parallel, chest up. Pause at bottom.',cues:['Chest tall','Knees track toes','3 sec down'],figs:['split_squat']},
+      {id:'stepup',name:'Step-ups',muscle:'Quads / glutes',sets:3,reps:'12 each leg',rest:45,desc:'Step onto surface, drive through heel to stand. Lower slowly.',cues:['Drive through heel','Stand fully','3 sec lowering'],figs:['split_squat']},
+      {id:'calfrise',name:'Single-leg calf raise',muscle:'Calves',sets:3,reps:'15 each',rest:30,desc:'On edge of step, one foot. Full range — rise and lower past neutral.',cues:['Full range','2 sec up, 3 sec down','Balance only'],figs:['standing_balance']},
+      {id:'firehydrant',name:'Fire hydrant',muscle:'Glutes / hips',sets:3,reps:'15 each leg',rest:30,desc:'All fours, band above knees. Lift leg out to side, squeeze at top.',cues:['Hips square','Squeeze at top','Slow and controlled'],figs:['glute_bridge_start']},
+      {id:'worldsgreatest',name:"World's greatest stretch",muscle:'Full body mobility',sets:2,reps:'5 each side',rest:30,desc:'From plank, step foot outside same hand. Reach opposite arm to sky.',cues:['Hold rotation 2 sec','Smooth movements','Breathe deeply'],figs:['split_squat']}
+    ],
+    3:[
+      {id:'row500b',name:'500m row sprint',muscle:'Full body / power',sets:4,reps:'500m max effort',rest:90,desc:'Full effort. Note split and hold it across all sets.',cues:['Legs first','Rate 28–32 s/m','Breathe out every stroke'],figs:['row_catch','row_drive']},
+      {id:'pushupdog',name:'Push-up to down dog',muscle:'Chest / shoulders',sets:3,reps:'10 reps',rest:45,desc:'Push-up then push hips up into downward dog. Heels toward floor.',cues:['Full push-up first','Heels toward floor','Fluid movement'],figs:['pushup']},
+      {id:'squatpress',name:'Band squat to press',muscle:'Full body',sets:3,reps:'12 reps',rest:60,desc:'Stand on band. Squat fully, press overhead as you stand.',cues:['Full squat first','Lock out overhead','Ears between arms'],figs:['split_squat','band_press']},
+      {id:'monkeyb',name:'Monkey bar traverse',muscle:'Grip / back',sets:3,reps:'2 full lengths',rest:60,desc:'Hip-driven swing. Light grip, deliberate pace.',cues:['Hips drive swing','Light grip','Not a race'],figs:['pullup_hang']},
+      {id:'burpeeb',name:'Burpees',muscle:'Full body / cardio',sets:3,reps:'10 reps',rest:60,desc:'Squat, jump back, lower, press up, jump in, jump up.',cues:['Land softly','Core braced','Step if needed'],figs:['pushup']},
+      {id:'row2k',name:'2000m steady row',muscle:'Cardio / endurance',sets:1,reps:'2000m at 65%',rest:120,desc:'Steady row at 65% effort. Perfect technique. Consistent split.',cues:['Consistent splits','Rate 22–26 s/m','Aerobic pace'],figs:['row_catch','row_drive']},
+      {id:'pullupcircuit',name:'Pull-up max sets',muscle:'Back / biceps',sets:4,reps:'Max reps',rest:90,desc:'Max pull-ups with good form. Log total reps.',cues:['Stop before failure','Dead hang bottom','Log total reps'],figs:['pullup_hang','pullup_top']},
+      {id:'dipcircuit',name:'Dip max sets',muscle:'Chest / triceps',sets:4,reps:'Max reps',rest:90,desc:'Max dips with good form. Full ROM.',cues:['Full ROM','Stop before failure','Log reps'],figs:['dip_top','dip_low']},
+      {id:'tabata',name:'Jump rope tabata',muscle:'Cardio',sets:8,reps:'20 sec on / 10 sec off',rest:0,desc:'20 sec max, 10 sec rest, 8 rounds.',cues:['Max pace each round','Use the 10 sec','Loose wrists'],figs:['jumprope']},
+      {id:'complex',name:'Row + burpee complex',muscle:'Full body',sets:5,reps:'250m + 5 burpees',rest:60,desc:'Row 250m, jump off, do 5 burpees, back to rower.',cues:['Fast transition','Burpees immediately','Manage pace'],figs:['row_drive','pushup']}
+    ],
+    4:[
+      {id:'slackfree',name:'Slackline free session',muscle:'Balance',sets:1,reps:'10 min',rest:0,desc:'Explore all slacklines. Walk, turn, sit. No structure.',cues:['Start on tightest line','Both directions','Barefoot if possible'],figs:['slack']},
+      {id:'mobility',name:'Mobility flow',muscle:'Full body',sets:1,reps:'15 min',rest:0,desc:'Cat-cow, pigeon, thread needle, forward fold. Hold 60–90 sec.',cues:['No forcing','Exhale to deepen','Recovery time'],figs:['split_squat']},
+      {id:'lightband',name:'Light band activation',muscle:'Shoulders / glutes',sets:2,reps:'15 each',rest:30,desc:'Light blue band: pull-aparts, glute bridges. Feel the muscle.',cues:['Activation not effort','2 sec pause','Perfect form'],figs:['bandwalk']},
+      {id:'easyrow',name:'Easy row — technique',muscle:'Light cardio',sets:1,reps:'15–20 min at 50%',rest:0,desc:'Long easy row focused on technique. No effort targets.',cues:['Rate 18–20 s/m','Think each phase','Effortless feel'],figs:['row_catch']},
+      {id:'slackwalk',name:'Slackline walking',muscle:'Balance',sets:1,reps:'20 min',rest:0,desc:'Walk back and forth. Smooth steps, turns, pauses.',cues:['Look at horizon','Arms slightly forward','Deliberate steps'],figs:['slack']},
+      {id:'breathing',name:'Box breathing + stretch',muscle:'Recovery',sets:1,reps:'10 min',rest:0,desc:'5 min box breathing (4-4-4-4) then slow stretching.',cues:['4-4-4-4 rhythm','Eyes closed','Release on exhale'],figs:['hollow']},
+      {id:'foamroll',name:'Self-massage',muscle:'Recovery',sets:1,reps:'10 min',rest:0,desc:'Roll quads, hamstrings, glutes, upper back. 60–90 sec each.',cues:['Pause on tight spots','Body weight pressure','Breathe through it'],figs:['glute_bridge_start']},
+      {id:'walk',name:'Outdoor walk',muscle:'Active recovery',sets:1,reps:'20–30 min',rest:0,desc:'Easy walk outside. Brisk but comfortable.',cues:['Conversational pace','No phone if possible','Real recovery'],figs:['slack']},
+      {id:'yogamat',name:'Yoga mat mobility',muscle:'Flexibility',sets:1,reps:'20 min',rest:0,desc:'Child pose, cat-cow, hip 90/90, piriformis. Follow what is tight.',cues:['90 sec holds minimum','Listen to body','No agenda'],figs:['split_squat']},
+      {id:'slackskill',name:'Slackline skill work',muscle:'Balance / skill',sets:1,reps:'20 min',rest:0,desc:'One skill: surf, bounce, sit, 180° turn.',cues:['One skill only','Rest between attempts','Film yourself'],figs:['slack']}
+    ]
+  },
+  indoor: {
+    0:[
+      {id:'band_row_bent',name:'Bent-over band row',muscle:'Back / biceps',sets:3,reps:'12 reps',rest:60,desc:'Anchor band low (under feet). Hinge forward at hips, pull handles to lower chest, elbows close. Squeeze shoulder blades at top.',cues:['Hinge 45° forward','Elbows close to body','Squeeze blades at top'],figs:['band_row']},
+      {id:'band_chest_press',name:'Band chest press',muscle:'Chest / triceps',sets:3,reps:'12 reps',rest:60,desc:'Band behind back, handles at chest. Press forward and slightly up to full arm extension. Control the return.',cues:['Core braced throughout','Full extension at front','3 sec return'],figs:['band_press']},
+      {id:'band_facepull',name:'Band face pull',muscle:'Rear delts / upper back',sets:3,reps:'15 reps',rest:45,desc:'Anchor band at head height. Pull handles to face, elbows flared high. Squeeze rear delts 1 sec.',cues:['Elbows high and wide','Pull to face level','Squeeze 1 sec'],figs:['band_row']},
+      {id:'band_shoulder_press',name:'Band shoulder press',muscle:'Shoulders',sets:3,reps:'12 reps',rest:60,desc:'Stand on band, handles at shoulders. Press overhead to full lock-out. Ears between arms.',cues:['Core braced','Full lock-out','3 sec lowering'],figs:['band_press']},
+      {id:'pushup_var',name:'Push-up variations',muscle:'Chest / triceps',sets:3,reps:'10–15 reps',rest:60,desc:'Standard push-up. Progress: wide grip for chest, narrow for triceps, feet elevated for shoulders.',cues:['Chest to floor','Body in straight line','Try different grips'],figs:['pushup']},
+      {id:'band_lateral_raise',name:'Band lateral raise',muscle:'Shoulders',sets:3,reps:'12 reps',rest:45,desc:'Stand on band, raise arms out to sides to shoulder height. Control the descent.',cues:['Lead with elbows not hands','Stop at shoulder height','3 sec lowering'],figs:['band_press']},
+      {id:'band_tricep',name:'Band tricep extension',muscle:'Triceps',sets:3,reps:'15 reps',rest:45,desc:'Anchor band high. Face away, arms overhead. Extend elbows to straighten arms. Squeeze at extension.',cues:['Upper arms stay still','Full extension','Control the return'],figs:['band_press']},
+      {id:'band_bicep',name:'Band bicep curl',muscle:'Biceps',sets:3,reps:'12 reps',rest:45,desc:'Stand on band, palms up. Curl handles to shoulders, elbows pinned.',cues:['Elbows pinned','Full extension down','No swinging'],figs:['band_press']},
+      {id:'band_pullapart',name:'Band pull-apart',muscle:'Rear delts',sets:3,reps:'15 reps',rest:45,desc:'Hold band at shoulder height. Pull apart until band touches chest. Squeeze 1 sec.',cues:['Arms at shoulder height','Squeeze at extension','Slow return'],figs:['band_row']},
+      {id:'pike_pushup',name:'Pike push-up',muscle:'Shoulders / triceps',sets:3,reps:'10 reps',rest:60,desc:'Downward dog position. Bend elbows to lower head toward floor, press back up. Hits shoulders hard.',cues:['Hips stay high','Head toward floor','Full extension up'],figs:['pushup']}
+    ],
+    1:[
+      {id:'rowint_i',name:'Row intervals',muscle:'Full body / cardio',sets:6,reps:'3 min on / 1 min easy',rest:60,desc:'Row at 70–75% for 3 min then easy 1 min. Legs drive first.',cues:['Catch: shins vertical','Drive: legs → hips → arms','Consistent split'],figs:['row_catch','row_drive']},
+      {id:'deadbug_i',name:'Dead bug',muscle:'Core',sets:3,reps:'10 each side',rest:45,desc:'Lie on back, arms up, knees at 90°. Lower opposite arm and leg without back lifting.',cues:['Back into mat','Exhale on extension','4 sec per rep'],figs:['deadbug']},
+      {id:'hollow_i',name:'Hollow body hold',muscle:'Core',sets:3,reps:'20–30 sec',rest:45,desc:'Press back into mat. Lift shoulders and legs. Hold banana shape.',cues:['Back glued to mat','Legs together, toes pointed','Build to 30 sec'],figs:['hollow']},
+      {id:'plank_i',name:'Plank variations',muscle:'Core / shoulders',sets:3,reps:'30–45 sec',rest:45,desc:'Forearm plank. Progress to shoulder taps or side plank.',cues:['Hips level','Squeeze glutes','Breathe steadily'],figs:['pushup']},
+      {id:'row500_i',name:'500m row sprint',muscle:'Full body / power',sets:4,reps:'500m max effort',rest:90,desc:'Full effort for 500m. Note split time each round.',cues:['Legs first','Rate 28–32 s/m','Breathe out on drive'],figs:['row_catch','row_drive']},
+      {id:'mountain_i',name:'Mountain climbers',muscle:'Core / cardio',sets:3,reps:'20 each leg',rest:45,desc:'From plank, alternate driving knees to chest.',cues:['Hips level','Drive knee to chest','Fast=cardio'],figs:['pushup']},
+      {id:'situp_i',name:'Sit-ups',muscle:'Core / abs',sets:3,reps:'15 reps',rest:45,desc:'Knees bent, sit up reaching hands to feet. Lower 3 sec.',cues:['Exhale rising','Reach forward','Slow descent'],figs:['deadbug']},
+      {id:'burpee_i',name:'Burpees',muscle:'Full body / cardio',sets:3,reps:'8–10 reps',rest:60,desc:'Squat, jump back, lower, press up, jump in, jump up.',cues:['Land softly','Chest to floor','Step if needed'],figs:['pushup']},
+      {id:'row2k_i',name:'2000m steady row',muscle:'Cardio / endurance',sets:1,reps:'2000m at 65%',rest:120,desc:'Steady row. Perfect technique throughout.',cues:['Consistent splits','Rate 22–26 s/m','Aerobic pace'],figs:['row_catch','row_drive']},
+      {id:'bear_crawl',name:'Bear crawl',muscle:'Full body / core',sets:3,reps:'10m forward + back',rest:60,desc:'On hands and feet, knees hovering 3cm off floor. Move opposite hand and foot. Keep back flat.',cues:['Knees just off floor','Opposite limbs move together','Back stays flat'],figs:['pushup']}
+    ],
+    2:[
+      {id:'splitsquat_i',name:'Bulgarian split squat',muscle:'Quads / glutes',sets:3,reps:'10 each leg',rest:60,desc:'Rear foot on sofa/chair. Front shin vertical. Lower rear knee, drive through front heel.',cues:['Front shin vertical','Knee tracks toes','3 sec lowering'],figs:['split_squat']},
+      {id:'glutebridge_i',name:'Band glute bridge',muscle:'Glutes / hamstrings',sets:3,reps:'15 reps',rest:45,desc:'Loop band above knees. Drive hips up squeezing glutes. Straight line shoulder to knee.',cues:['Straight line — no arch','Squeeze glutes hard','Press knees into band'],figs:['glute_bridge_start','glute_bridge_top']},
+      {id:'bandwalk_i',name:'Lateral band walk',muscle:'Glutes / hips',sets:3,reps:'15 steps each way',rest:45,desc:'Band above knees, slight squat. Step sideways keeping band taut.',cues:['Stay in squat','Hips level','Band always taut'],figs:['bandwalk']},
+      {id:'singleleg_i',name:'Single-leg balance',muscle:'Balance / ankle',sets:3,reps:'60 sec each leg',rest:30,desc:'Stand on one leg on the mat. Find a fixed point to focus on. Progress to eyes closed.',cues:['Soft knee','Fixed gaze','Eyes closed to progress'],figs:['standing_balance']},
+      {id:'lunge_i',name:'Hip flexor stretch',muscle:'Hip flexors',sets:2,reps:'60 sec each side',rest:15,desc:'Low lunge on mat, rear knee down. Drive hips forward.',cues:['Hips forward','Rear glute engaged','Breathe into stretch'],figs:['split_squat']},
+      {id:'squat_i',name:'Bodyweight squat',muscle:'Quads / glutes',sets:3,reps:'15–20 reps',rest:45,desc:'Feet shoulder-width. Thighs parallel, chest up. Pause at bottom.',cues:['Chest tall','Knees track toes','3 sec down'],figs:['split_squat']},
+      {id:'rdl_band',name:'Band Romanian deadlift',muscle:'Hamstrings / glutes',sets:3,reps:'12 reps',rest:60,desc:'Stand on band. Hinge at hips, push them back, lower band along legs. Drive hips forward to stand.',cues:['Hinge at hips — not knees','Back stays flat','Feel stretch in hamstrings'],figs:['band_row']},
+      {id:'calfrise_i',name:'Single-leg calf raise',muscle:'Calves',sets:3,reps:'15 each',rest:30,desc:'Edge of a step or raised surface. Full range.',cues:['Full range','2 sec up, 3 sec down','Wall for balance only'],figs:['standing_balance']},
+      {id:'firehydrant_i',name:'Fire hydrant',muscle:'Glutes / hips',sets:3,reps:'15 each leg',rest:30,desc:'All fours, band above knees. Lift leg to side, squeeze at top.',cues:['Hips square','Squeeze at top','Slow and controlled'],figs:['glute_bridge_start']},
+      {id:'stepup_i',name:'Step-ups (on chair)',muscle:'Quads / glutes',sets:3,reps:'12 each leg',rest:45,desc:'Use a sturdy chair or step. Drive through heel to stand fully.',cues:['Drive through heel','Stand fully','3 sec lowering'],figs:['split_squat']}
+    ],
+    3:[
+      {id:'row500c',name:'500m row sprint',muscle:'Full body / power',sets:4,reps:'500m max effort',rest:90,desc:'Full effort. Note split and hold it across all sets.',cues:['Legs first','Rate 28–32 s/m','Breathe out every stroke'],figs:['row_catch','row_drive']},
+      {id:'squatpress_i',name:'Band squat to press',muscle:'Full body',sets:3,reps:'12 reps',rest:60,desc:'Stand on band. Squat fully, press overhead as you stand.',cues:['Full squat first','Lock out overhead','Ears between arms'],figs:['split_squat','band_press']},
+      {id:'pushup_i',name:'Push-up to down dog',muscle:'Chest / shoulders',sets:3,reps:'10 reps',rest:45,desc:'Full push-up then push hips up into downward dog.',cues:['Full push-up first','Heels toward floor','Fluid movement'],figs:['pushup']},
+      {id:'band_row_i',name:'Bent-over band row',muscle:'Back / biceps',sets:3,reps:'12 reps',rest:60,desc:'Anchor under feet. Hinge forward, pull to lower chest.',cues:['Hinge 45°','Elbows close','Squeeze blades'],figs:['band_row']},
+      {id:'burpee_c',name:'Burpees',muscle:'Full body / cardio',sets:3,reps:'10 reps',rest:60,desc:'Squat, jump back, lower, press up, jump in, jump up.',cues:['Land softly','Core braced','Step if needed'],figs:['pushup']},
+      {id:'row2k_c',name:'2000m steady row',muscle:'Cardio / endurance',sets:1,reps:'2000m at 65%',rest:120,desc:'Steady row. Perfect technique throughout.',cues:['Consistent splits','Rate 22–26 s/m','Aerobic pace'],figs:['row_catch','row_drive']},
+      {id:'band_complex',name:'Band circuit',muscle:'Full body',sets:3,reps:'10 each movement',rest:60,desc:'Back-to-back: squat → row → press. No rest between movements. Rest 60 sec between sets.',cues:['No rest between moves','Control each rep','Use handled band'],figs:['band_press','band_row']},
+      {id:'hollow_c',name:'Hollow body hold',muscle:'Core',sets:3,reps:'30 sec',rest:45,desc:'Press back into mat. Lift shoulders and legs. Banana shape.',cues:['Back into mat','Legs together','Full 30 sec'],figs:['hollow']},
+      {id:'glute_bridge_c',name:'Band glute bridge',muscle:'Glutes / hamstrings',sets:3,reps:'20 reps',rest:45,desc:'Loop band above knees. Drive hips up squeezing glutes hard.',cues:['Squeeze hard at top','Straight line','Press knees out'],figs:['glute_bridge_start','glute_bridge_top']},
+      {id:'bear_crawl_c',name:'Bear crawl',muscle:'Full body / core',sets:3,reps:'10m forward + back',rest:60,desc:'Knees hovering 3cm. Opposite limbs move. Back flat.',cues:['Knees just off floor','Opposite limbs','Back flat'],figs:['pushup']}
+    ],
+    4:[
+      {id:'mobility_i',name:'Full body mobility flow',muscle:'Full body',sets:1,reps:'20 min',rest:0,desc:'Cat-cow, pigeon, thread needle, hip 90/90, forward fold. Hold 60–90 sec each.',cues:['No forcing','Exhale to deepen','Recovery time'],figs:['split_squat']},
+      {id:'lightband_i',name:'Light band activation',muscle:'Shoulders / glutes',sets:2,reps:'15 each',rest:30,desc:'Light blue band: pull-aparts, glute bridges, face pulls. Feel the muscle.',cues:['Activation not effort','2 sec pause','Perfect form'],figs:['bandwalk']},
+      {id:'easyrow_i',name:'Easy row — technique',muscle:'Light cardio',sets:1,reps:'15–20 min at 50%',rest:0,desc:'Long easy row. Focus entirely on technique.',cues:['Rate 18–20 s/m','Think each phase','Effortless feel'],figs:['row_catch']},
+      {id:'breathing_i',name:'Box breathing + stretch',muscle:'Recovery',sets:1,reps:'10 min',rest:0,desc:'5 min box breathing (4-4-4-4) then slow stretching.',cues:['4-4-4-4 rhythm','Eyes closed','Release on exhale'],figs:['hollow']},
+      {id:'singleleg_rec',name:'Single-leg balance',muscle:'Balance / proprioception',sets:3,reps:'60 sec each leg',rest:20,desc:'On mat. Eyes open, then eyes closed. Use wall only if needed.',cues:['Soft knee','Eyes closed = harder','Build to 60 sec'],figs:['standing_balance']},
+      {id:'foamroll_i',name:'Self-massage on mat',muscle:'Recovery',sets:1,reps:'10 min',rest:0,desc:'Roll quads, hamstrings, glutes, upper back. 60–90 sec each.',cues:['Pause on tight spots','Body weight pressure','Breathe through it'],figs:['glute_bridge_start']},
+      {id:'yogamat_i',name:'Yoga mat mobility',muscle:'Flexibility',sets:1,reps:'20 min',rest:0,desc:'Child pose, cat-cow, hip 90/90, piriformis. Follow what is tight.',cues:['90 sec holds minimum','Listen to body','No agenda'],figs:['split_squat']},
+      {id:'deadbug_rec',name:'Dead bug — slow',muscle:'Core / recovery',sets:2,reps:'8 each side',rest:30,desc:'Very slow dead bug. 5 sec extension, 5 sec return. Pure core activation.',cues:['5 sec each way','Back into mat always','Breathe throughout'],figs:['deadbug']},
+      {id:'hollow_rec',name:'Hollow body — short holds',muscle:'Core / recovery',sets:3,reps:'15 sec',rest:30,desc:'Short easy holds. Focus on position not duration.',cues:['Position over time','Back into mat','Easy effort only'],figs:['hollow']},
+      {id:'breathing_stretch',name:'Progressive relaxation',muscle:'Recovery / nervous system',sets:1,reps:'15 min',rest:0,desc:'Lie on mat. Tense and release each muscle group from feet to head. Then 5 min box breathing.',cues:['Tense then fully release','Work feet to head','Finish with breathing'],figs:['hollow']}
+    ]
+  }
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let weekOrder = [0,1,2,3,4];
+let sessionExercises = {
+  outdoor: weekOrder.map(sid => POOL.outdoor[sid].slice(0,5).map(e => e.id)),
+  indoor:  weekOrder.map(sid => POOL.indoor[sid].slice(0,5).map(e => e.id))
+};
+let currentDay = 0;
+let dragSrcDay = null;
+let dragSrcEx = null;
+let workoutIdx = 0;
+let setsDone = [];
+let timerInt = null;
+let timerSec = 0;
+let poolFilter = '';
+let poolMuscle = '';
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+function getPool() { return POOL[mode]; }
+function getSessions() { return SESSION_DEFS[mode]; }
+function getSessionExs() { return sessionExercises[mode]; }
+function getEx(dayIdx, id) { return getPool()[weekOrder[dayIdx]].find(e => e.id === id); }
+function getDayExs(dayIdx) { return getSessionExs()[dayIdx].map(id => getEx(dayIdx, id)).filter(Boolean); }
+function isIndoor() { return mode === 'indoor'; }
+
+// ─── WEEK ─────────────────────────────────────────────────────────────────────
+function renderWeek() {
+  const g = document.getElementById('dayGrid'); g.innerHTML = '';
+  weekOrder.forEach((sid, i) => {
+    const s = getSessions()[sid];
+    const d = document.createElement('div');
+    d.className = 'dp' + (i === currentDay ? (' sel ' + mode) : '');
+    d.draggable = true;
+    d.innerHTML = `<div class="dl">${DAYS_ARR[i]}</div><div class="dn">D${i+1}</div><div class="dt">${s.tag}</div>`;
+    d.onclick = () => { currentDay = i; renderWeek(); renderDay(); };
+    d.ondragstart = e => { dragSrcDay = i; setTimeout(() => d.classList.add('dra'), 0); };
+    d.ondragend = () => { d.classList.remove('dra'); document.querySelectorAll('.dp').forEach(x => x.classList.remove('dov')); };
+    d.ondragover = e => { e.preventDefault(); d.classList.add('dov'); };
+    d.ondragleave = () => d.classList.remove('dov');
+    d.ondrop = e => {
+      e.preventDefault(); d.classList.remove('dov');
+      if (dragSrcDay !== null && dragSrcDay !== i) {
+        [weekOrder[dragSrcDay], weekOrder[i]] = [weekOrder[i], weekOrder[dragSrcDay]];
+        [sessionExercises.outdoor[dragSrcDay], sessionExercises.outdoor[i]] = [sessionExercises.outdoor[i], sessionExercises.outdoor[dragSrcDay]];
+        [sessionExercises.indoor[dragSrcDay], sessionExercises.indoor[i]] = [sessionExercises.indoor[i], sessionExercises.indoor[dragSrcDay]];
+        if (currentDay === dragSrcDay) currentDay = i; else if (currentDay === i) currentDay = dragSrcDay;
+        renderWeek(); renderDay();
+      }
+      dragSrcDay = null;
+    };
+    g.appendChild(d);
+  });
+}
+
+// ─── DAY ─────────────────────────────────────────────────────────────────────
+function renderDay() {
+  const sid = weekOrder[currentDay];
+  const s = getSessions()[sid];
+  const exs = getDayExs(currentDay);
+  const ind = isIndoor();
+  document.getElementById('dayDetail').innerHTML = `
+    ${ind ? '<div class="indoor-banner">&#127960; Indoor mode — no outdoor equipment needed</div>' : ''}
+    <div class="sess-card ${ind ? 'indoor' : ''}">
+      <div class="sess-mode-tag ${ind ? 'indoor' : ''}">${ind ? '&#127960; Indoor' : '&#9728; Outdoor'}</div>
+      <div class="sess-title">${s.name}</div>
+      <div class="sess-sub">Warm-up: ${s.warmup}</div>
+      <div class="meta-row">
+        <span class="badge">${s.duration}</span>
+        <span class="badge">${exs.length} exercises</span>
+        <span class="badge">${s.tools}</span>
+      </div>
+    </div>
+    <div class="sec-hdr">
+      <span class="sec-lbl">Session exercises</span>
+      <button class="txt-btn" onclick="openPool()">Edit pool +</button>
+    </div>
+    <div class="ex-list" id="exList"></div>
+    <button class="start-btn ${ind ? 'indoor' : ''}" onclick="startWorkout()">Start session</button>
+  `;
+  renderExList();
+}
+
+function renderExList() {
+  const exs = getDayExs(currentDay);
+  const list = document.getElementById('exList');
+  if (!list) return;
+  const ind = isIndoor();
+  list.innerHTML = '';
+  exs.forEach((ex, i) => {
+    const card = document.createElement('div');
+    card.className = 'ex-card';
+    card.innerHTML = `
+      <div class="ex-hdr">
+        <div class="ex-drag" draggable="true" data-i="${i}">&#8597;</div>
+        <div class="ex-num ${ind ? 'indoor' : ''}">${i+1}</div>
+        <div class="ex-inf">
+          <div class="ex-nm">${ex.name}</div>
+          <div class="ex-dt">${ex.muscle} · ${ex.sets} sets · ${ex.reps}</div>
+        </div>
+        <div class="ex-act">
+          <button class="icon-btn danger" onclick="removeEx(event,${i})">&#10005;</button>
+          <div class="chev" id="chev${i}">&#8964;</div>
+        </div>
+      </div>
+      <div class="ex-body" id="exb${i}">
+        <div class="fig-row">${ex.figs.map(f => `<div class="fig-box">${makeFig(f)}</div>`).join('')}</div>
+        <div class="ex-desc">${ex.desc}</div>
+        <div>${ex.cues.map(c => `<div class="cue ${ind ? 'indoor' : ''}">${c}</div>`).join('')}</div>
+      </div>
+    `;
+    card.querySelector('.ex-hdr').onclick = e => {
+      if (e.target.closest('.icon-btn') || e.target.closest('.ex-drag')) return;
+      document.getElementById('exb' + i).classList.toggle('op');
+      document.getElementById('chev' + i).classList.toggle('op');
+    };
+    const drag = card.querySelector('.ex-drag');
+    drag.ondragstart = e => { dragSrcEx = i; e.dataTransfer.effectAllowed = 'move'; };
+    card.ondragover = e => e.preventDefault();
+    card.ondrop = e => {
+      e.preventDefault();
+      if (dragSrcEx !== null && dragSrcEx !== i) {
+        const arr = getSessionExs()[currentDay];
+        [arr[dragSrcEx], arr[i]] = [arr[i], arr[dragSrcEx]];
+        dragSrcEx = null; renderExList();
+      }
+      dragSrcEx = null;
+    };
+    list.appendChild(card);
+  });
+}
+
+function removeEx(e, i) { e.stopPropagation(); getSessionExs()[currentDay].splice(i, 1); renderExList(); }
+
+// ─── POOL ─────────────────────────────────────────────────────────────────────
+function openPool() {
+  poolFilter = ''; poolMuscle = '';
+  document.getElementById('poolTitle').textContent = getSessions()[weekOrder[currentDay]].name + ' — pool';
+  document.getElementById('poolSearch').value = '';
+  renderPoolFilters(); renderPool(); show('s-pool');
+}
+
+function renderPoolFilters() {
+  const pool = getPool()[weekOrder[currentDay]];
+  const muscles = [...new Set(pool.map(e => e.muscle.split(' / ')[0]))];
+  const ind = isIndoor();
+  document.getElementById('muscleFilters').innerHTML =
+    `<div class="mf${poolMuscle === '' ? (' sel' + (ind ? ' indoor' : '')) : ''}" onclick="setMuscle('')">All</div>` +
+    muscles.map(m => `<div class="mf${poolMuscle === m ? (' sel' + (ind ? ' indoor' : '')) : ''}" onclick="setMuscle('${m}')">${m}</div>`).join('');
+}
+function setMuscle(m) { poolMuscle = m; renderPoolFilters(); renderPool(); }
+function filterPool(v) { poolFilter = v.toLowerCase(); renderPool(); }
+
+function renderPool() {
+  const pool = getPool()[weekOrder[currentDay]];
+  const current = getSessionExs()[currentDay];
+  const ind = isIndoor();
+  document.getElementById('poolList').innerHTML = '';
+  pool.filter(ex => {
+    const mOk = poolMuscle === '' || ex.muscle.toLowerCase().includes(poolMuscle.toLowerCase());
+    const sOk = poolFilter === '' || ex.name.toLowerCase().includes(poolFilter) || ex.muscle.toLowerCase().includes(poolFilter);
+    return mOk && sOk;
+  }).forEach(ex => {
+    const added = current.includes(ex.id);
+    const card = document.createElement('div');
+    card.className = 'ex-card' + (added ? ' added' : '');
+    card.innerHTML = `
+      <div class="ex-hdr" onclick="togglePool(this,'${ex.id}')">
+        <div class="ex-inf">
+          <div class="ex-nm">${ex.name}</div>
+          <div class="ex-dt">${ex.muscle} · ${ex.sets} sets · ${ex.reps}</div>
+        </div>
+        <div class="chev" id="pchev${ex.id}">&#8964;</div>
+      </div>
+      <div class="ex-body" id="pb${ex.id}">
+        <div class="fig-row">${ex.figs.map(f => `<div class="fig-box">${makeFig(f)}</div>`).join('')}</div>
+        <div class="ex-desc">${ex.desc}</div>
+        <div>${ex.cues.map(c => `<div class="cue ${ind ? 'indoor' : ''}">${c}</div>`).join('')}</div>
+        <button class="add-btn${added ? ' rem' : (ind ? ' indoor-btn' : '')}" onclick="toggleAdd('${ex.id}',event)">
+          ${added ? 'Remove from session' : 'Add to session'}
+        </button>
+      </div>
+    `;
+    document.getElementById('poolList').appendChild(card);
+  });
+}
+
+function togglePool(hdr, id) {
+  document.getElementById('pb' + id).classList.toggle('op');
+  document.getElementById('pchev' + id).classList.toggle('op');
+}
+function toggleAdd(id, e) {
+  e.stopPropagation();
+  const arr = getSessionExs()[currentDay];
+  const idx = arr.indexOf(id);
+  if (idx > -1) arr.splice(idx, 1); else arr.push(id);
+  renderPool();
+}
+
+// ─── WORKOUT ──────────────────────────────────────────────────────────────────
+function startWorkout() {
+  workoutIdx = 0;
+  const exs = getDayExs(currentDay);
+  setsDone = exs.map(ex => Array(ex.sets).fill(false));
+  show('s-workout');
+  document.getElementById('progBar').className = 'prog-bar' + (isIndoor() ? ' indoor' : '');
+  renderWorkoutEx();
+}
+function endWorkout() { clearTimer(); show('s-week'); renderDay(); }
+
+function renderWorkoutEx() {
+  clearTimer();
+  const exs = getDayExs(currentDay);
+  if (workoutIdx >= exs.length) { renderFinish(); return; }
+  const ex = exs[workoutIdx];
+  const ind = isIndoor();
+  document.getElementById('progBar').style.width = Math.round((workoutIdx / exs.length) * 100) + '%';
+  document.getElementById('workoutContent').innerHTML = `
+    <div class="w-card">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:3px;font-family:sans-serif;font-weight:700;letter-spacing:.06em;text-transform:uppercase">
+        ${ind ? '&#127960; Indoor · ' : '&#9728; Outdoor · '}Exercise ${workoutIdx+1} of ${exs.length}
+      </div>
+      <div class="w-ex-nm">${ex.name}</div>
+      <div class="w-ex-st">${ex.sets} sets · ${ex.reps} · ${ex.rest}s rest</div>
+      <div class="fig-row" style="margin:12px 0">${ex.figs.map(f => `<div class="fig-box">${makeFig(f)}</div>`).join('')}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.65;margin-bottom:10px;font-family:sans-serif">${ex.desc}</div>
+      <div style="font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;font-family:sans-serif">Sets</div>
+      <div class="set-row" id="setRow">
+        ${setsDone[workoutIdx].map((d, i) => `<div class="sdot${d ? (' done' + (ind ? ' indoor' : '')) : ''}" onclick="markSet(${i})">${d ? '&#10003;' : i+1}</div>`).join('')}
+      </div>
+      <div id="timerArea"></div>
+    </div>
+    <div class="nav-row">
+      <button class="nav-btn" onclick="prevEx()">&#8592; Prev</button>
+      <button class="nav-btn pri${ind ? ' indoor' : ''}" onclick="nextEx()">Next &#8594;</button>
+    </div>
+  `;
+}
+
+function markSet(si) {
+  const ex = getDayExs(currentDay)[workoutIdx];
+  const ind = isIndoor();
+  setsDone[workoutIdx][si] = !setsDone[workoutIdx][si];
+  document.getElementById('setRow').innerHTML = setsDone[workoutIdx]
+    .map((d, i) => `<div class="sdot${d ? (' done' + (ind ? ' indoor' : '')) : ''}" onclick="markSet(${i})">${d ? '&#10003;' : i+1}</div>`)
+    .join('');
+  if (setsDone[workoutIdx].every(Boolean) && ex.rest > 0) startRest(ex.rest);
+}
+
+function startRest(s) {
+  clearTimer(); timerSec = s; renderTimer();
+  timerInt = setInterval(() => {
+    timerSec--;
+    if (timerSec <= 0) {
+      clearTimer();
+      document.getElementById('timerArea').innerHTML = `<div style="text-align:center;padding:10px;font-size:13px;color:${isIndoor() ? 'var(--green)' : 'var(--blue)'};font-weight:700;font-family:sans-serif">Rest done — go!</div>`;
+    } else renderTimer();
+  }, 1000);
+}
+function clearTimer() { if (timerInt) { clearInterval(timerInt); timerInt = null; } }
+
+function renderTimer() {
+  const area = document.getElementById('timerArea'); if (!area) return;
+  const ex = getDayExs(currentDay)[workoutIdx];
+  const frac = timerSec / ex.rest;
+  const ind = isIndoor();
+  const r = 44, cx = 52, cy = 52, circ = 2 * Math.PI * r;
+  area.innerHTML = `<div class="timer-wrap">
+    <div class="t-circle">
+      <svg width="104" height="104" viewBox="0 0 104 104">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e8e6e0" stroke-width="6"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${ind ? 'var(--green)' : 'var(--blue)'}" stroke-width="6"
+          stroke-dasharray="${(frac*circ).toFixed(1)} ${circ.toFixed(1)}"
+          transform="rotate(-90 ${cx} ${cy})"/>
+      </svg>
+      <div class="t-num">${timerSec}</div>
+    </div>
+    <div class="t-lbl">Rest — next set coming up</div>
+  </div>`;
+}
+
+function nextEx() { if (workoutIdx < getDayExs(currentDay).length - 1) { workoutIdx++; renderWorkoutEx(); } else renderFinish(); }
+function prevEx() { if (workoutIdx > 0) { workoutIdx--; renderWorkoutEx(); } }
+
+function renderFinish() {
+  clearTimer();
+  document.getElementById('progBar').style.width = '100%';
+  const ind = isIndoor();
+  document.getElementById('workoutContent').innerHTML = `
+    <div class="finish">
+      <div style="font-size:44px;margin-bottom:12px">&#10003;</div>
+      <div style="font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em">Session complete</div>
+      <div style="font-size:13px;color:var(--text2);margin-top:6px;font-family:sans-serif">${ind ? 'Good work — indoors counts.' : 'Good work.'}</div>
+      <button class="nav-btn pri${ind ? ' indoor' : ''}" style="margin-top:1.5rem;width:100%" onclick="endWorkout()">Back to plan</button>
+    </div>
+  `;
+}
+
+
+// ─── WAKE LOCK (silent video trick for iOS) ───────────────────────────────────
+let wakeActive = false;
+let wakeVideo = null;
+
+function toggleWake() {
+  if (wakeActive) {
+    stopWake();
+  } else {
+    startWake();
+  }
+}
+
+function startWake() {
+  // Create a tiny silent looping video — iOS keeps screen on for active video
+  if (!wakeVideo) {
+    wakeVideo = document.createElement('video');
+    wakeVideo.setAttribute('playsinline', '');
+    wakeVideo.setAttribute('muted', '');
+    wakeVideo.setAttribute('loop', '');
+    wakeVideo.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1';
+    // 1x1 transparent MP4 encoded as base64 — minimal valid video
+    wakeVideo.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAA1FtZGF0AAACrgYF//+q3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE1MiByMjg1NCBlOWE1NjAzIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNyAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVhbmFseXplPTEgZmFzdHBza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiBtaXhlZF9yZWY9MSBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiB0aHJlYWRzPTMgbG9va2FoZWFkX3RocmVhZHM9MSBzbGljZWRfdGhyZWFkcz0wIG5yPTAgZGVjaW1hdGU9MSBpbnRlcmxhY2VkPTAgYmx1cmF5X2NvbXBhdD0wIGNvbnN0cmFpbmVkX2ludHJhPTAgYmZyYW1lcz0zIGJfcHlyYW1pZD0yIGJfYWRhcHQ9MSBiX2JpYXM9MCBkaXJlY3Q9MSB3ZWlnaHRiPTEgb3Blbl9nb3A9MCB3ZWlnaHRwPTIga2V5aW50PTI1MCBrZXlpbnRfbWluPTI1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAAD2WIhAAz//727L4FNf2f0QAAAkJliIQAM///92vl9WARz7x8KLG2UqAAAAAGQZokbEEv/wAAAAAIQZpIbEEv/wAAAAAIQZpobEEv/wAAAAAIQZqIbEEv/wAAAAhBmqhsQS//AAAAAAAAAwhBmsxsQS//AAAAAAAAAAAAA';
+    document.body.appendChild(wakeVideo);
+  }
+  wakeVideo.play().then(() => {
+    wakeActive = true;
+    updateWakeUI();
+  }).catch(() => {
+    // Autoplay blocked — inform user
+    alert('Tap OK then tap the Screen button again to enable keep-screen-on.');
+  });
+}
+
+function stopWake() {
+  if (wakeVideo) {
+    wakeVideo.pause();
+  }
+  wakeActive = false;
+  updateWakeUI();
+}
+
+function updateWakeUI() {
+  const btn = document.getElementById('wakeBtn');
+  const lbl = document.getElementById('wakeLabel');
+  if (wakeActive) {
+    btn.classList.add('active');
+    lbl.textContent = 'Screen on';
+  } else {
+    btn.classList.remove('active');
+    lbl.textContent = 'Screen';
+  }
+}
+
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderWeek();
+renderDay();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/training-app/sw.js'));
+}
+</script>
+</body>
+</html>
